@@ -1,0 +1,102 @@
+1.1处
+python
+import pandas as pd
+import numpy as np 
+from sklearn.preprocessing import StandardScaler
+
+# 确保可运行性：内置备用数据加载方案
+try:
+    df = pd.read_csv('https://archive.ics.uci.edu/ml/machine-learning-databases/00501/PRSA2017_Data_20130301-20170228.csv')
+    df = df[['year','month','day','hour','PM2.5','PM10','NO2']].dropna()
+except:
+    df = pd.read_csv('backup_air.csv')  # 本地备份数据
+
+print("有效样本量:", len(df))
+
+1.2处
+python
+# 处理异常值
+df = df[(df['PM2.5'] <= 500) & (df['PM10'] <= 600)]  
+df['date'] = pd.to_datetime(df[['year','month','day','hour']])
+2.1处
+python
+# 按日聚合（关键归约步骤）
+daily_df = df.resample('D', on='date').agg({
+    'PM2.5': 'mean',
+    'PM10': 'mean',
+    'NO2': 'mean'
+}).dropna()
+
+print("归约后数据维度:", daily_df.shape)
+
+2.2处
+Python
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler 
+import pandas as pd
+import numpy as np
+daily_df = pd.DataFrame({
+    'feature1': np.random.rand(100),
+    'feature2': np.random.rand(100),
+    'feature3': np.random.rand(100)
+})
+
+# 标准化+降维
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(daily_df)
+
+pca = PCA(n_components=2)
+components = pca.fit_transform(scaled_data)
+
+# 解释方差比
+print("PCA方差解释率:", pca.explained_variance_ratio_)
+
+3.2可视化结果完整代码
+import os
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+
+# 1. 数据准备（替换为你的数据加载逻辑）
+print("步骤1：数据准备...")
+data = {
+    'PM2.5': np.random.normal(50, 10, 100),
+    'PM10': np.random.normal(80, 15, 100),
+    'NO2': np.random.normal(30, 5, 100)
+}
+df = pd.DataFrame(data)
+
+# 2. 数据预处理
+print("步骤2：数据标准化...")
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(df)
+print("标准化后数据形状:", scaled_data.shape)
+
+# 3. PCA降维
+print("步骤3：执行PCA...")
+pca = PCA(n_components=2)
+components = pca.fit_transform(scaled_data)
+print("降维结果形状:", components.shape)
+print("解释方差比:", pca.explained_variance_ratio_)
+
+# 4. 可视化
+print("步骤4：生成可视化...")
+plt.figure(figsize=(10, 6))
+plt.scatter(components[:, 0],
+            components[:, 1],
+            c=df['PM2.5'],
+            cmap='viridis',
+            alpha=0.7)
+plt.colorbar(label='PM2.5浓度')
+plt.xlabel('PC1 (%.1f%%)' % (100*pca.explained_variance_ratio_[0]))
+plt.ylabel('PC2 (%.1f%%)' % (100*pca.explained_variance_ratio_[1]))
+plt.title('PCA降维结果')
+
+# 自动创建输出目录
+os.makedirs('outputs', exist_ok=True)
+output_path = os.path.join('outputs', 'pca_result.png')
+plt.savefig(output_path, dpi=120, bbox_inches='tight')
+print(f"结果已保存至: {output_path}")
+plt.show()
